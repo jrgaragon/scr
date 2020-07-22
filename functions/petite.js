@@ -2,9 +2,13 @@ const scrapper = require("./scrapper");
 const axios = require("axios");
 const xpath = require("xpath-html");
 const fs = require("fs");
-const { RSA_NO_PADDING } = require("constants");
+const {
+  RSA_NO_PADDING
+} = require("constants");
 const utility = require("../utility/utility");
-const { Console } = require("console");
+const {
+  Console
+} = require("console");
 
 class petite extends scrapper {
   constructor() {
@@ -72,7 +76,10 @@ class petite extends scrapper {
 
     for (let chunk of chunks) {
       let p = chunk.map(u =>
-        this.scrap({ uri: u, xpath: config.xpathGallery })
+        this.scrap({
+          uri: u,
+          xpath: config.xpathGallery
+        })
       );
 
       let image = await Promise.all(p);
@@ -112,13 +119,17 @@ class petite extends scrapper {
     let urls = await super.scrap(config);
 
     return urls.map(s => {
-      let t = s.getAttribute("href");
-      t = `${config.uri.replace(/\/index\.htm.?/, "")}${t}`;
-      if (t && this.isValidDomain(t)) {
-        return { uri: t, gallery: config.uri, id: config.id };
-      }
-    })
-    .filter(t => typeof t !== "undefined");
+        let t = s.getAttribute("href");
+        t = `${config.uri.replace(/\/index\.htm.?/, "")}${t}`;
+        if (t && this.isValidDomain(t)) {
+          return {
+            uri: t,
+            gallery: config.uri,
+            id: config.id
+          };
+        }
+      })
+      .filter(t => typeof t !== "undefined");
   }
 
   async getSubGallery(config) {
@@ -132,7 +143,10 @@ class petite extends scrapper {
       .map(s => {
         let t = s.getAttribute("href");
         if (t && this.isValidDomain(t)) {
-          return { uri: t, mainUri: config.uri };
+          return {
+            uri: t,
+            mainUri: config.uri
+          };
         }
       })
       .filter(t => typeof t !== "undefined");
@@ -154,7 +168,10 @@ class petite extends scrapper {
     for (let chunk of chunks) {
       let scrapSubGalleryResult = await Promise.all(
         chunk.map(g =>
-          super.scrap({ uri: g.uri, xpath: config.xpathSubGallery })
+          super.scrap({
+            uri: g.uri,
+            xpath: config.xpathSubGallery
+          })
         )
       );
 
@@ -201,13 +218,23 @@ class petite extends scrapper {
   }
 
   async scrapImage(config) {
-    let image = await super.getImage(config.uri);
-    return {
-      image: image.data,
-      id: config.id,
-      gallery: config.gallery,
-      status: image.status,
-      uri: config.uri
+    try {
+      let image = await super.getImage(config.uri);
+      return {
+        image: image.data,
+        id: config.id,
+        gallery: config.gallery,
+        status: image.status,
+        uri: config.uri
+      }
+    } catch (e) {
+      return {
+        image: null,
+        id: config.id,
+        gallery: config.gallery,
+        status: e.status,
+        uri: config.uri
+      }
     }
   }
 }

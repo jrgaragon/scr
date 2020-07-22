@@ -15,6 +15,7 @@ const imageSchema = mongoose.Schema({
     model: String,
     size: Number,
     gallery: String
+
 });
 
 const Image = mongoose.model('Image', imageSchema);

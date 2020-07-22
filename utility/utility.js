@@ -24,6 +24,16 @@ function utility() {
       setTimeout(resolve, ms);
     });
   };
+
+  self.GetFilename = async (url) => {
+    if (url) {
+      var m = url.toString().match(/.*\/(.+?)\./);
+      if (m && m.length > 1) {
+        return m[1];
+      }
+    }
+    return "";
+  };
 }
 
 utility.instance = null;

@@ -13,6 +13,10 @@ const gallerySchema = mongoose.Schema({
   gallery: String,
   fixed: Boolean,
   status: String,
+  download: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const Gallery = mongoose.model("Gallery", gallerySchema);

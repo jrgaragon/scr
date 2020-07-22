@@ -27,6 +27,7 @@ app.use((req, res, next) => {
 });
 
 require("./routes/site")(app);
+require("./routes/admin/adminsite")(app);
 
 app.get("/", (request, response) => {
   response.status(200).send(`App Running on Port ${config.server.port}`);
@@ -357,67 +358,70 @@ app.get("/scrapper/petite/fixUrl", (request, response) => {
   response.send({});
 });
 
-app.get("/scrapper/petite/images", (request, response) => {
+app.get("/scrapper/petite/images", async (request, response) => {
   const u = utility.getInstance();
   const scrapper = new ScrapperPetite();
+  const filter = {
+    download: true,
+    status: ''
+  };
+  let galleryCount = await Gallery.countDocuments(filter);
 
-  Gallery.find({
-    status: ""
-  }, async (err, result) => {
-    if (err) response.status(500).send(err);
+  let pages = Math.ceil(galleryCount / request.body.pageSize);
 
-    let chunks = await u.splitArray(result, request.body.chunkSize);
+  console.log(`Pages: ${pages}`);
 
-    console.log(`Chunks: ${chunks.length}`);
-    let count = 1;
-    for (chunk of chunks) {
-      let promises = chunk
-        .filter(img => typeof img.url !== "undefined")
-        .map(img => {
-          return scrapper.scrapImage({
-            uri: img.url,
-            id: img.id,
-            gallery: img.gallery,
-          });
+  for (let i = 1; i < pages; i++) {
+    let results = await Gallery.find(filter).limit(request.body.pageSize).skip(request.body.pageSize * (i - 1));
+
+    let promises = results
+      .filter(img => typeof img.url !== "undefined")
+      .map(img => {
+        return scrapper.scrapImage({
+          uri: img.url,
+          id: img.id,
+          gallery: img.gallery,
         });
-
-      let imagesResult = await Promise.all(promises);
-
-      let savePromises = imagesResult.map(result => {
-        if (result.status === 200) {
-          let imagedbObject = Image({
-            id: u.guid(),
-            image: result.image,
-            imageName: `${GetFilename(result.uri)}.jpg`,
-            url: result.uri,
-            section: "petite",
-            gallery: result.gallery,
-            size: result.image.length,
-          });
-
-          return imagedbObject.save({}, async (err, r) => {
-            if (err) throw err;
-            await Gallery.findOneAndUpdate({
-              id: result.id
-            }, {
-              status: "downloaded"
-            });
-          });
-        } else {
-          return Gallery.findOneAndUpdate({
-            id: result.id
-          }, {
-            status: `ERROR[${result.status}]`
-          });
-        }
       });
 
-      await Promise.all(savePromises);
-      console.log(`[${count}] - Sleeping 5000`);
-      await u.sleep(5000);
-      count++;
-    }
-  });
+    let imagesResult = await Promise.all(promises);
+
+    let savePromises = imagesResult.map(result => {
+      if (result.status === 200) {
+        console.log(result.uri);
+        let imagedbObject = Image({
+          id: u.guid(),
+          image: result.image,
+          imageName: `${GetFilename(result.uri)}.jpg`,
+          url: result.uri,
+          section: "petite",
+          gallery: result.gallery,
+          size: result.image.length,
+        });
+
+        return imagedbObject.save({}, async (err, r) => {
+          if (err) throw err;
+          await Gallery.findOneAndUpdate({
+            id: result.id
+          }, {
+            status: "downloaded"
+          });
+        });
+      } else {
+        console.error(`ERROR[${result.uri}]`);
+        return Gallery.findOneAndUpdate({
+          id: result.id
+        }, {
+          status: `ERROR[${result.status}]`
+        });
+      }
+    });
+
+    await Promise.all(savePromises);
+    console.log(`[${i}] - Sleeping ${request.body.sleepTime}`);
+    await u.sleep(request.body.sleepTime);
+
+  }
 
   response.status(200).send({
     status: "processing"
