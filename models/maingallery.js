@@ -1,7 +1,6 @@
 'use strict';
 const mongoose = require('mongoose');
 
-
 const mainGallerySchema = mongoose.Schema({
     id: String,     
     url: String,
@@ -10,7 +9,12 @@ const mainGallerySchema = mongoose.Schema({
         default: Date.now
     },
     section: String,
-    status: String 
+    status: String ,
+    rating: {
+       type: Number,
+       default: 1
+    },
+    thumbnail: String
 });
 
 const MainGallery = mongoose.model('MainGallery', mainGallerySchema);

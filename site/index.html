@@ -7,12 +7,16 @@
             <div class="card-group">
                 <div class="columns medium-3" v-for="gallery in galleries">
                     <div class="card" style="width: 18rem;">
+                        <img v-if="gallery.thumbnail.length > 0" :src="gallery.thumbnail" class="card-img-top" alt="" style="width:180; height: 290;">
                         <div class="card-body">
-                            <h5 class="card-title">{{ gallery.name }}</h5>
+                            <h4 class="card-title">
+                                <a :href="`subgallery.html?id=${gallery.id}`" class="">{{ gallery.name }}</a>
+                            </h4>
                         </div>
                         <div class="card-body">
-                            <a :href="`subgallery.html?id=${gallery.id}`" class="btn btn-primary">Galleries</a>
-                            <button type="button" class="btn btn-warning">Favorito</button>
+                            <a :href="`subgallery.html?id=${gallery.id}`" class="btn btn-primary">Link</a>
+                            <button type="button" class="btn btn-warning">F</button>
+                            <button type="button" class="btn btn-danger">D</button>
                         </div>
                     </div>
                 </div>
@@ -20,8 +24,7 @@
         </div>
     </body>
 </html>
-<script type="application/javascript">
-var app = new Vue({
+<script type="application/javascript">var app = new Vue({
     el: '#app-main-gallery',
     data: {
         galleries: []
@@ -30,6 +33,8 @@ var app = new Vue({
         axios.get("http://localhost:3000/petite/galleries").then(response => {
             this.galleries = response.data;
         });
+    },
+    methods: {
+        
     }
-});
-</script>
+})</script>

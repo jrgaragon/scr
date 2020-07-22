@@ -1,61 +1,100 @@
 <html>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<header>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <body>
-        <div id="app-main-gallery">
-            <div class="alert alert-warning" role="alert" v-show="warning">
-                Not Images found
-              </div>
-            <div class="card-group">
-                <div class="columns medium-3" v-for="gallery in galleries">
-                    <div class="card" style="width: 18rem;">
-                        <div class="card-body">
-                            <a :href="`image.html?id=${gallery.imageId}`"><img :src="gallery.image"></a>                                                     
-                        </div>                        
+</header>
+
+<body>
+    <div id="app-main-gallery">
+        <div class="alert alert-success" role="alert" v-show="alerts.success.show">
+            {{alerts.success.message}}
+        </div>
+        <div class="alert alert-danger" role="alert" v-show="alerts.error.show">
+            {{alerts.error.message}}
+        </div>
+        <div class="card-group">
+            <div class="columns medium-3" v-for="gallery in galleries">
+                <div class="card" style="width: 18rem;">
+                    <div class="card-body">
+                        <a :href="`image.html?id=${gallery.imageId}`"><img :src="gallery.image"></a>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group" role="group" aria-label="menu"></div>
+                        <button type="button" class="btn btn-warning"
+                            v-on:click="markAsFavorite(gallery.imageId)">F</button>
+                        <button type="button" class="btn btn-success"
+                            v-on:click="selectMainImageAsFavorite(gallery.imageId)">SM</button>
+                        <button type="button" class="btn btn-success"
+                            v-on:click="selectSubImageAsFavorite(gallery.imageId)">SS</button>
+                        <button type="button" class="btn btn-danger">D</button>
                     </div>
                 </div>
             </div>
         </div>
-    </body>
+    </div>
+</body>
+
 </html>
 <script type="application/javascript">
-
     var app = new Vue({
         el: '#app-main-gallery',
         data: {
             galleries: [],
-            warning: false
-        },
-	
-	
-	
-		
-	
-	
-	
-		
-	
-	
-	
+            imageId: '',
+            alerts: {
+                success: {
+                    message: '',
+                    show: false
+                },
+                error: {
+                    message: '',
+                    show: false
+                }
+            }
 
-    Kari Sweets >
-    
-    awesome stuff!
-    
+        },
         mounted() {
             let uri = window.location.search.substring(1);
             let params = new URLSearchParams(uri);
+            this.imageId = params.get('id');
             console.log(params.get("id"));
 
-            axios.get(`http://localhost:3000/petite/galleries/${params.get("id").trim()}`).then(response => {
-                if(response.data.length === 0) {
-                    this.warning = true;
-                }
+            axios.get(`http://localhost:3000/petite/galleries/${
+                this.imageId
+            }`).then(response => {
                 this.galleries = response.data;
             }).catch(e => console.log(e));
-
-
+        },
+        methods: {
+            selectMainImageAsFavorite: function (imageId) {
+                let vm = this;
+                axios.post(`http://localhost:3000/petite/admin/setMainImage/${
+                    imageId
+                }`).then(response => {
+                    if (response.data.status === 'done') {
+                        vm.alerts.success.show = true;
+                        vm.alerts.success.message = `Done: [${
+                            response.data.galleryUrl
+                        }]`;
+                        setTimeout(() => {
+                            vm.alerts.success.show = false;
+                            vm.alerts.success.message = '';
+                        }, 5000)
+                    }
+                }).catch(e => {
+                    console.log(JSON.stringify(e));
+                    vm.alerts.error.show = true;
+                    vm.alerts.error.message = e.response.data.message;
+                    setTimeout(() => {
+                        vm.alerts.error.show = false;
+                        vm.alerts.error.message = '';
+                    }, 10000);
+                });
+            },
+            selectSubImageAsFavorite: function (imageId) {},
+            markAsFavorite: function (imageId) {}
         }
     })
 </script>
