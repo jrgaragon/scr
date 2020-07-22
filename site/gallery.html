@@ -1,0 +1,61 @@
+<html>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <body>
+        <div id="app-main-gallery">
+            <div class="alert alert-warning" role="alert" v-show="warning">
+                Not Images found
+              </div>
+            <div class="card-group">
+                <div class="columns medium-3" v-for="gallery in galleries">
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <a :href="`image.html?id=${gallery.imageId}`"><img :src="gallery.image"></a>                                                     
+                        </div>                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+<script type="application/javascript">
+
+    var app = new Vue({
+        el: '#app-main-gallery',
+        data: {
+            galleries: [],
+            warning: false
+        },
+	
+	
+	
+		
+	
+	
+	
+		
+	
+	
+	
+
+    Kari Sweets >
+    
+    awesome stuff!
+    
+        mounted() {
+            let uri = window.location.search.substring(1);
+            let params = new URLSearchParams(uri);
+            console.log(params.get("id"));
+
+            axios.get(`http://localhost:3000/petite/galleries/${params.get("id").trim()}`).then(response => {
+                if(response.data.length === 0) {
+                    this.warning = true;
+                }
+                this.galleries = response.data;
+            }).catch(e => console.log(e));
+
+
+        }
+    })
+</script>

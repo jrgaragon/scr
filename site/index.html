@@ -1,0 +1,35 @@
+<html>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <body>
+        <div id="app-main-gallery">
+            <div class="card-group">
+                <div class="columns medium-3" v-for="gallery in galleries">
+                    <div class="card" style="width: 18rem;">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ gallery.name }}</h5>
+                        </div>
+                        <div class="card-body">
+                            <a :href="`subgallery.html?id=${gallery.id}`" class="btn btn-primary">Galleries</a>
+                            <button type="button" class="btn btn-warning">Favorito</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+<script type="application/javascript">
+var app = new Vue({
+    el: '#app-main-gallery',
+    data: {
+        galleries: []
+    },
+    mounted() {
+        axios.get("http://localhost:3000/petite/galleries").then(response => {
+            this.galleries = response.data;
+        });
+    }
+});
+</script>

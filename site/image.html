@@ -1,0 +1,29 @@
+<html>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <body>
+        <div id="app-main-gallery">
+            <img :src="image"/>
+        </div>
+    </body>
+</html>
+<script type="application/javascript">
+
+    var app = new Vue({
+        el: '#app-main-gallery',
+        data: {
+            image: ''
+        },
+        mounted() {
+            let uri = window.location.search.substring(1);
+            let params = new URLSearchParams(uri);
+            console.log(params.get("id"));
+
+            axios.get(`http://localhost:3000/petite/image/${params.get("id").trim()}`).then(response => {
+                console.log(response)
+                this.image = response.data.image;
+            }).catch(e => console.log(e));
+        }
+    })
+</script>
