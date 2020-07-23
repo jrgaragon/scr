@@ -5,7 +5,8 @@
     
     <body>
         <div id="app-main-gallery">
-            <div class="card-group">
+            <notification :alerts="alerts"></notification>
+            <div class="card-group">                
                 <div class="columns medium-3" v-for="gallery in galleries">
                     <div class="card" style="width: 18rem;">
                         <div class="card-body">
@@ -20,12 +21,13 @@
                             <a :href="`gallery.html?id=${gallery.id}`" class="btn btn-primary">Link</a>
                             <button type="button" class="btn btn-warning">F</button>
                             <button type="button" class="btn btn-info">Fix</button>
-                            <button type="button" class="btn btn-danger">D</button>
+                            <button type="button" class="btn btn-danger" v-on:click="deleteGallery(gallery.id)">D</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </body>
+    <script src="components/alerts.js"></script>
     <script src="scripts/subgallery.js"></script>
 </html>

@@ -8,12 +8,6 @@
 
 <body>
     <div id="gallery">
-        <!-- <div class="alert alert-success" role="alert" v-show="alerts.success.show">
-            {{alerts.success.message}}
-        </div>
-        <div class="alert alert-danger" role="alert" v-show="alerts.error.show">
-            {{alerts.error.message}}
-        </div> -->
         <notification :alerts="alerts"></notification>
         <div class="card-group">
             <div class="columns medium-3" v-for="gallery in galleries">
@@ -29,7 +23,7 @@
                             v-on:click="selectMainImageAsFavorite(gallery.imageId)">SM</button>
                         <button type="button" class="btn btn-success"
                             v-on:click="selectSubImageAsFavorite(gallery.imageId)">SS</button>
-                        <button type="button" class="btn btn-danger">D</button>
+                        <button type="button" class="btn btn-danger" v-on:click="deleteImage(gallery.imageId)">D</button>
                     </div>
                 </div>
             </div>

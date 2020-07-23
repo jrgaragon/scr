@@ -11,9 +11,11 @@ const ScrapperPetite = require("./functions/petite");
 const app = express();
 
 app.use(express.json());
-app.use(require("body-parser").urlencoded({
-  extended: false
-}));
+app.use(
+  require("body-parser").urlencoded({
+    extended: false,
+  })
+);
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
@@ -41,27 +43,27 @@ app.get("/scrapper/petite/maingallery", (request, response) => {
     console.log(result);
 
     Promise.all(
-        result.map(page => {
-          let mainGallery = new MainGallery({
-            id: u.guid(),
-            url: page.uri,
-            section: "petite",
-            status: "",
-          });
+      result.map(page => {
+        let mainGallery = new MainGallery({
+          id: u.guid(),
+          url: page.uri,
+          section: "petite",
+          status: "",
+        });
 
-          return mainGallery.save();
-        })
-      )
+        return mainGallery.save();
+      })
+    )
       .then(_ => {
         response.status(200).send({
           status: "done",
-          size: result.length
+          size: result.length,
         });
       })
       .catch(err => {
         response.status(500).send({
           status: "error",
-          messasge: err
+          messasge: err,
         });
       });
   });
@@ -74,7 +76,7 @@ app.get("/scrapper/petite/subGallery", (request, response) => {
     console.log(gallery);
     if (err) {
       response.status(500).send({
-        message: err
+        message: err,
       });
     }
 
@@ -97,7 +99,7 @@ app.get("/scrapper/petite/subGallery", (request, response) => {
         await Promise.all(
           i.map(async r => {
             let exist = await SubGallery.exists({
-              url: r.uri
+              url: r.uri,
             });
             if (!exist) {
               let subGallery = new SubGallery({
@@ -117,7 +119,7 @@ app.get("/scrapper/petite/subGallery", (request, response) => {
       await u.sleep(5000);
     }
     response.status(200).send({
-      size: gallery.length
+      size: gallery.length,
     });
   });
 });
@@ -136,8 +138,9 @@ app.get("/scrapper/petite/gallery", (request, response) => {
     const resultsPerPage = request.body.pageSize;
 
     for (let i = 1; i < pages; i++) {
-
-      let results = await SubGallery.find(filter).limit(resultsPerPage).skip(resultsPerPage * (i - 1));
+      let results = await SubGallery.find(filter)
+        .limit(resultsPerPage)
+        .skip(resultsPerPage * (i - 1));
 
       let gallerieUrls = results.map(r => {
         return scrapper.getGallery({
@@ -154,7 +157,7 @@ app.get("/scrapper/petite/gallery", (request, response) => {
           await Promise.all(
             scrapResult.map(async g => {
               let exist = await Gallery.exists({
-                url: g.uri
+                url: g.uri,
               });
 
               if (!exist) {
@@ -168,23 +171,28 @@ app.get("/scrapper/petite/gallery", (request, response) => {
                 });
 
                 return gallery.save({}, (err, item) => {
-                  SubGallery.findOne({
-                    id: g.id
-                  }, (e, subGallery) => {
-                    subGallery.status = "scrapped";
-                    subGallery.save();
-                  });
+                  SubGallery.findOne(
+                    {
+                      id: g.id,
+                    },
+                    (e, subGallery) => {
+                      subGallery.status = "scrapped";
+                      subGallery.save();
+                    }
+                  );
                 });
               } else {
-
                 console.log(`Exist - ${g.id} - ${g.uri}`);
 
-                return SubGallery.findOne({
-                  id: g.id
-                }, (e, subGallery) => {
-                  subGallery.status = "scrapped";
-                  subGallery.save();
-                });
+                return SubGallery.findOne(
+                  {
+                    id: g.id,
+                  },
+                  (e, subGallery) => {
+                    subGallery.status = "scrapped";
+                    subGallery.save();
+                  }
+                );
               }
             })
           );
@@ -195,7 +203,9 @@ app.get("/scrapper/petite/gallery", (request, response) => {
         console.log("Not");
       }
     }
-    console.log('----------------------------------------DONE----------------------------------------');
+    console.log(
+      "----------------------------------------DONE----------------------------------------"
+    );
   });
   response.status(200).send({});
 });
@@ -203,20 +213,23 @@ app.get("/scrapper/petite/gallery", (request, response) => {
 app.get("/scrapper/petite/fix", (request, response) => {
   const u = utility.getInstance();
   Gallery.aggregate(
-    [{
-      $match: {
-        "fixed": {
-          $eq: null
-        }
-      }
-    }, {
-      $group: {
-        _id: "$gallery",
-        count: {
-          $sum: 1
-        }
-      }
-    }],
+    [
+      {
+        $match: {
+          fixed: {
+            $eq: null,
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$gallery",
+          count: {
+            $sum: 1,
+          },
+        },
+      },
+    ],
     async function (err, results) {
       if (err) response.status(500).send(err);
 
@@ -226,16 +239,15 @@ app.get("/scrapper/petite/fix", (request, response) => {
 
       for (chunk of chunks) {
         for (galleryItem of chunk) {
-
           let galleryImages = await Gallery.find({
-            gallery: galleryItem._id
+            gallery: galleryItem._id,
           });
 
           let gallery = galleryImages.map(g => {
             return {
               url: g.url,
               gallery: g.gallery,
-            }
+            };
           });
 
           let sequence = [];
@@ -266,9 +278,8 @@ app.get("/scrapper/petite/fix", (request, response) => {
           }
 
           let mongoSave = sequence.map(async mongo => {
-
             let doc = await Gallery.findOne({
-              url: mongo.url
+              url: mongo.url,
             });
 
             if (!doc) {
@@ -293,11 +304,11 @@ app.get("/scrapper/petite/fix", (request, response) => {
 
           await Promise.all(mongoSave).then(results => {});
         }
-        console.log('Sleep');
+        console.log("Sleep");
         await u.sleep(1000);
       }
-
-    });
+    }
+  );
 
   response.send({});
 });
@@ -315,21 +326,22 @@ function GetFilename(url) {
 app.get("/scrapper/petite/fixUrl", (request, response) => {
   const u = utility.getInstance();
   Gallery.aggregate(
-    [{
+    [
+      {
         $match: {
           url: {
-            $regex: /\/index\.htm.?[0-9]+\.jpg/i
-          }
-        }
+            $regex: /\/index\.htm.?[0-9]+\.jpg/i,
+          },
+        },
       },
       {
         $group: {
           _id: "$gallery",
           count: {
-            $sum: 1
-          }
-        }
-      }
+            $sum: 1,
+          },
+        },
+      },
     ],
     async (err, results) => {
       if (err) response.status(500).send(err);
@@ -337,24 +349,29 @@ app.get("/scrapper/petite/fixUrl", (request, response) => {
       let chunks = await u.splitArray(results, 100);
 
       for (chunk of chunks) {
-        let promises = chunk.map((item) => {
-          return Gallery.find({
-            gallery: item._id
-          }, (err, galleryItem) => {
-
-            galleryItem.map((item, index) => {
-              let newValue = item.url.replace(/\/index\.htm.?[0-9]+\.jpg/i, `/${ (index + 1)}.jpg`);
-              console.log(`${item.url} - ${newValue}`);
-              item.url = newValue;
-              return item.save();
-            });
-
-          });
+        let promises = chunk.map(item => {
+          return Gallery.find(
+            {
+              gallery: item._id,
+            },
+            (err, galleryItem) => {
+              galleryItem.map((item, index) => {
+                let newValue = item.url.replace(
+                  /\/index\.htm.?[0-9]+\.jpg/i,
+                  `/${index + 1}.jpg`
+                );
+                console.log(`${item.url} - ${newValue}`);
+                item.url = newValue;
+                return item.save();
+              });
+            }
+          );
         });
 
         await Promise.all(promises);
       }
-    });
+    }
+  );
   response.send({});
 });
 
@@ -362,17 +379,28 @@ app.get("/scrapper/petite/images", async (request, response) => {
   const u = utility.getInstance();
   const scrapper = new ScrapperPetite();
   const filter = {
-    download: true,
-    status: ''
+    $and: [{ download: true }],
+    $or: [{ status: "" }, { status: null }],
   };
-  let galleryCount = await Gallery.countDocuments(filter);
 
+  //{$and: [{download: true}], $or: [ { status: { $ne: 'downloaded'}}, {status: null}, {status: ''}]}
+
+  let galleryCount = await Gallery.countDocuments(filter);
   let pages = Math.ceil(galleryCount / request.body.pageSize);
+
+  response.status(200).send({
+    status: "done",
+    message: `Processing: Pages[${pages}]`,
+  });
 
   console.log(`Pages: ${pages}`);
 
-  for (let i = 1; i < pages; i++) {
-    let results = await Gallery.find(filter).limit(request.body.pageSize).skip(request.body.pageSize * (i - 1));
+  for (let i = 1; pages > 0; i++) {
+    let results = await Gallery.find(filter).limit(request.body.pageSize);
+
+    if (result.length === 0) {
+      break;
+    }
 
     let promises = results
       .filter(img => typeof img.url !== "undefined")
@@ -401,31 +429,36 @@ app.get("/scrapper/petite/images", async (request, response) => {
 
         return imagedbObject.save({}, async (err, r) => {
           if (err) throw err;
-          await Gallery.findOneAndUpdate({
-            id: result.id
-          }, {
-            status: "downloaded"
-          });
+          await Gallery.findOneAndUpdate(
+            {
+              id: result.id,
+            },
+            {
+              status: "downloaded",
+            }
+          );
         });
       } else {
         console.error(`ERROR[${result.uri}]`);
-        return Gallery.findOneAndUpdate({
-          id: result.id
-        }, {
-          status: `ERROR[${result.status}]`
-        });
+        return Gallery.findOneAndUpdate(
+          {
+            id: result.id,
+          },
+          {
+            status: `ERROR[${result.status}]`,
+          }
+        );
       }
     });
 
     await Promise.all(savePromises);
     console.log(`[${i}] - Sleeping ${request.body.sleepTime}`);
+
+    galleryCount = await Gallery.countDocuments(filter);
+    pages = Math.ceil(galleryCount / request.body.pageSize);
+
     await u.sleep(request.body.sleepTime);
-
   }
-
-  response.status(200).send({
-    status: "processing"
-  });
 });
 
 app.listen(config.server.port, function () {
