@@ -96,12 +96,14 @@ module.exports = app => {
         let imagedbModel = await Image.findOne({
           id: subGallery.thumbnail,
         });
+        
+        if (imagedbModel) {
+          let thumbnail = await sharp(imagedbModel.image)
+            .resize(180, 290)
+            .toBuffer();
 
-        let thumbnail = await sharp(imagedbModel.image)
-          .resize(180, 290)
-          .toBuffer();
-
-        image = `data:image/png;base64, ${thumbnail.toString("base64")}`;
+          image = `data:image/png;base64, ${thumbnail.toString("base64")}`;
+        }
       }
 
       responseImages.push({

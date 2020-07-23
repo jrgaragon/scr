@@ -11,8 +11,12 @@ module.exports = app => {
     try {
       const imageId = request.params.imageId;
 
-      let image = await Image.findOne({ id: imageId });
-      let subGallery = await SubGallery.findOne({ url: image.gallery });
+      let image = await Image.findOne({
+        id: imageId
+      });
+      let subGallery = await SubGallery.findOne({
+        url: image.gallery
+      });
       let mainGallery = await MainGallery.findOne({
         url: subGallery.mainGallery,
       });
@@ -29,7 +33,11 @@ module.exports = app => {
     } catch (e) {
       response
         .status(500)
-        .send({ status: "error", message: e.message, stack: e.stack });
+        .send({
+          status: "error",
+          message: e.message,
+          stack: e.stack
+        });
     }
   });
 
@@ -37,9 +45,13 @@ module.exports = app => {
     try {
       const imageId = request.params.imageId;
 
-      let image = await Image.findOne({ id: imageId });
+      let image = await Image.findOne({
+        id: imageId
+      });
 
-      let subGallery = await SubGallery.findOne({ url: image.gallery });
+      let subGallery = await SubGallery.findOne({
+        url: image.gallery
+      });
 
       subGallery.thumbnail = image.id;
       await subGallery.save();
@@ -53,7 +65,11 @@ module.exports = app => {
     } catch (e) {
       response
         .status(500)
-        .send({ status: "error", message: e.message, stack: e.stack });
+        .send({
+          status: "error",
+          message: e.message,
+          stack: e.stack
+        });
     }
   });
 
@@ -62,10 +78,14 @@ module.exports = app => {
     let mainGallery = await MainGallery.findOne({
       id: request.params.galleryId,
     });
-    let galleries = await SubGallery.find({ mainGallery: mainGallery.url });
+    let galleries = await SubGallery.find({
+      mainGallery: mainGallery.url
+    });
 
     for (let gallery of galleries) {
-      let images = await Gallery.find({ gallery: gallery.url });
+      let images = await Gallery.find({
+        gallery: gallery.url
+      });
 
       for (let image of images) {
         console.log(image.url);
@@ -76,11 +96,16 @@ module.exports = app => {
       await Promise.all(promises);
     }
     console.log("done");
-    response.send({status: 'done', message: `Marked ${request.params.galleryId}` });
+    response.send({
+      status: 'done',
+      message: `Marked ${request.params.galleryId}`
+    });
   });
 
   app.delete("/petite/admin/delete/:imageId", async (request, response) => {
-    await Image.deleteOne({ id: request.params.imageId });
+    await Image.deleteOne({
+      id: request.params.imageId
+    });
 
     response.send({
       status: "done",
@@ -88,29 +113,37 @@ module.exports = app => {
     });
   });
 
-  app.delete(
-    "/petite/admin/deleteSubGallery/:galleryId",
-    async (request, response) => {
-      let subGallery = await SubGallery.findOne({
-        id: request.params.galleryId,
-      });
+  app.delete("/petite/admin/deleteSubGallery/:galleryId", async (request, response) => {
+    let promises = [];
+    let subGallery = await SubGallery.findOne({
+      id: request.params.galleryId,
+    });
 
-      console.log(request.params.galleryId);
-      let galleries = await Gallery.find({ gallery: subGallery.url });
+    console.log(request.params.galleryId);
 
-      await SubGallery.deleteOne({ id: request.params.galleryId });      
+    let galleries = await Gallery.find({
+      gallery: subGallery.url
+    });
 
-      for (gallery of galleries) {
-        await Promise.all([
-          Gallery.deleteOne({ id: gallery.id }),
-          Image.deleteMany({ url: gallery.url }),
-        ]);
-      }
+    promises.push(SubGallery.deleteOne({
+      id: request.params.galleryId
+    }));
 
-      response.send({
-        status: "done",
-        message: `Gallery deleted: ${request.params.galleryId}`,
-      });
+    for (gallery of galleries) {
+      promises.push(Gallery.deleteOne({
+        id: gallery.id
+      }));
+      promises.push(Image.deleteMany({
+        url: gallery.url
+      }));     
     }
+
+    await Promise.all(promises);
+
+    response.send({
+      status: "done",
+      message: `Gallery deleted: ${request.params.galleryId}`,
+    });
+  }
   );
 };

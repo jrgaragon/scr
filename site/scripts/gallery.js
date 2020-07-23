@@ -50,10 +50,12 @@ var app = new Vue({
     markAsFavorite: function (imageId) {},
     deleteImage: function (imageId) {
       let vm = this;
+      if (confirm('Delete?')) {
       axios
         .delete(`http://localhost:3000/petite/admin/delete/${imageId}`)
         .then(response => vm.processResponseMesage(response))
         .catch(e => vm.processResponseMesage({}, e));
+      }
     },
     processResponseMesage: function (response, e) {
       let vm = this;

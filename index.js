@@ -43,17 +43,17 @@ app.get("/scrapper/petite/maingallery", (request, response) => {
     console.log(result);
 
     Promise.all(
-      result.map(page => {
-        let mainGallery = new MainGallery({
-          id: u.guid(),
-          url: page.uri,
-          section: "petite",
-          status: "",
-        });
+        result.map(page => {
+          let mainGallery = new MainGallery({
+            id: u.guid(),
+            url: page.uri,
+            section: "petite",
+            status: "",
+          });
 
-        return mainGallery.save();
-      })
-    )
+          return mainGallery.save();
+        })
+      )
       .then(_ => {
         response.status(200).send({
           status: "done",
@@ -171,8 +171,7 @@ app.get("/scrapper/petite/gallery", (request, response) => {
                 });
 
                 return gallery.save({}, (err, item) => {
-                  SubGallery.findOne(
-                    {
+                  SubGallery.findOne({
                       id: g.id,
                     },
                     (e, subGallery) => {
@@ -184,8 +183,7 @@ app.get("/scrapper/petite/gallery", (request, response) => {
               } else {
                 console.log(`Exist - ${g.id} - ${g.uri}`);
 
-                return SubGallery.findOne(
-                  {
+                return SubGallery.findOne({
                     id: g.id,
                   },
                   (e, subGallery) => {
@@ -213,8 +211,7 @@ app.get("/scrapper/petite/gallery", (request, response) => {
 app.get("/scrapper/petite/fix", (request, response) => {
   const u = utility.getInstance();
   Gallery.aggregate(
-    [
-      {
+    [{
         $match: {
           fixed: {
             $eq: null,
@@ -326,8 +323,7 @@ function GetFilename(url) {
 app.get("/scrapper/petite/fixUrl", (request, response) => {
   const u = utility.getInstance();
   Gallery.aggregate(
-    [
-      {
+    [{
         $match: {
           url: {
             $regex: /\/index\.htm.?[0-9]+\.jpg/i,
@@ -350,8 +346,7 @@ app.get("/scrapper/petite/fixUrl", (request, response) => {
 
       for (chunk of chunks) {
         let promises = chunk.map(item => {
-          return Gallery.find(
-            {
+          return Gallery.find({
               gallery: item._id,
             },
             (err, galleryItem) => {
@@ -379,8 +374,14 @@ app.get("/scrapper/petite/images", async (request, response) => {
   const u = utility.getInstance();
   const scrapper = new ScrapperPetite();
   const filter = {
-    $and: [{ download: true }],
-    $or: [{ status: "" }, { status: null }],
+    $and: [{
+      download: true
+    }],
+    $or: [{
+      status: ""
+    }, {
+      status: null
+    }],
   };
 
   //{$and: [{download: true}], $or: [ { status: { $ne: 'downloaded'}}, {status: null}, {status: ''}]}
@@ -398,7 +399,7 @@ app.get("/scrapper/petite/images", async (request, response) => {
   for (let i = 1; pages > 0; i++) {
     let results = await Gallery.find(filter).limit(request.body.pageSize);
 
-    if (result.length === 0) {
+    if (results.length === 0) {
       break;
     }
 
@@ -413,43 +414,53 @@ app.get("/scrapper/petite/images", async (request, response) => {
       });
 
     let imagesResult = await Promise.all(promises);
+    let savePromises = [];
 
-    let savePromises = imagesResult.map(result => {
+    for (let result of imagesResult) {
       if (result.status === 200) {
         console.log(result.uri);
+        let imageId = u.guid();
         let imagedbObject = Image({
-          id: u.guid(),
+          id: imageId,
           image: result.image,
           imageName: `${GetFilename(result.uri)}.jpg`,
           url: result.uri,
           section: "petite",
           gallery: result.gallery,
           size: result.image.length,
-        });
+        });    
 
-        return imagedbObject.save({}, async (err, r) => {
-          if (err) throw err;
-          await Gallery.findOneAndUpdate(
-            {
-              id: result.id,
-            },
-            {
-              status: "downloaded",
-            }
-          );
-        });
+        savePromises.push(
+          SubGallery.findOneAndUpdate({
+            $and: [{
+              url: result.gallery
+            }],
+            $or: [{
+              thumbnail: null
+            }, {
+              thumbnail: ''
+            }]
+          }, {
+            thumbnail: imageId
+          })
+        );
+
+        savePromises.push(imagedbObject.save());
+        savePromises.push(Gallery.findOneAndUpdate({
+          id: result.id,
+        }, {
+          status: "downloaded",
+        }));
+
       } else {
         console.error(`ERROR[${result.uri}]`);
-        return Gallery.findOneAndUpdate(
-          {
-            id: result.id,
-          },
-          {
-            status: `ERROR[${result.status}]`,
-          }
-        );
+        savePromises.push(Gallery.findOneAndUpdate({
+          id: result.id,
+        }, {
+          status: `ERROR[${result.status}]`,
+        }));
       }
-    });
+    }
 
     await Promise.all(savePromises);
     console.log(`[${i}] - Sleeping ${request.body.sleepTime}`);

@@ -30,12 +30,15 @@ var app = new Vue({
   methods: {
     deleteGallery: function (galleryId) {
       let vm = this;
-      axios
-        .delete(
-          `http://localhost:3000/petite/admin/deleteSubGallery/${galleryId}`
-        )
-        .then(response => vm.processResponseMesage(response))
-        .catch(e => vm.processResponseMesage(e));
+
+      if (confirm('Delete?')) {
+        axios
+          .delete(
+            `http://localhost:3000/petite/admin/deleteSubGallery/${galleryId}`
+          )
+          .then(response => vm.processResponseMesage(response))
+          .catch(e => vm.processResponseMesage(e));
+      }
     },
     processResponseMesage: function (response) {
       let vm = this;

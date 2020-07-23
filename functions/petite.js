@@ -232,7 +232,7 @@ class petite extends scrapper {
         image: null,
         id: config.id,
         gallery: config.gallery,
-        status: e.status,
+        status: e.response.status,
         uri: config.uri
       }
     }
