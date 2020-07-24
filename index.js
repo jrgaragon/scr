@@ -420,6 +420,7 @@ app.get("/scrapper/petite/images", async (request, response) => {
       if (result.status === 200) {
         console.log(result.uri);
         let imageId = u.guid();
+        
         let imagedbObject = Image({
           id: imageId,
           image: result.image,

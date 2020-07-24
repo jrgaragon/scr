@@ -51,7 +51,7 @@ module.exports = app => {
             id: gallery.id,
             url: gallery.url,
             name: gallery.url.split("/")[4].replace(/_/g, " "),
-            thumbnail: '',
+            thumbnail: "",
           }))()
         );
       }
@@ -60,8 +60,8 @@ module.exports = app => {
     let galleriesResult = [];
 
     try {
-      galleriesResult = await Promise.all(promises);      
-      response.send(galleriesResult.filter(g=> g.name));
+      galleriesResult = await Promise.all(promises);
+      response.send(galleriesResult.filter(g => g.name));
     } catch (e) {
       console.log(e);
       response
@@ -72,82 +72,132 @@ module.exports = app => {
 
   app.get("/petite/galleries/:id", async (request, response) => {
     let responseImages = [];
+    let query = [
+      {
+        $match: { id: request.params.id },
+      },
+      {
+        $lookup: {
+          from: "galleries",
+          localField: "url",
+          foreignField: "gallery",
+          as: "galleries",
+        },
+      },
+      { $unwind: { path: "$galleries", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "images",
+          localField: "url",
+          foreignField: "gallery",
+          as: "galleries.images",
+        },
+      },
+      {
+        $unwind: {
+          path: "$galleries.images",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $group: {
+          _id: {
+            id: "$id",
+            url: "$url",
+          },
+          images: {
+            $addToSet: "$galleries.images",
+          },
+        },
+      },
+      {
+        $project: {
+          id: "$_id.id",
+          url: "$_id.url",
+          images: 1,
+        },
+      },
+    ];
 
-    let subGallery = await SubGallery.findOne({
-      id: request.params.id,
-    });
+    let subgallery = await SubGallery.aggregate(query);
+    let parentGallery = subgallery[0];
+    let promises = [];
 
-    if (subGallery) {
-      let galleries = await Gallery.find({
-        gallery: subGallery.url,
-      });
-      if (galleries) {
-        for (let gallery of galleries) {
-          let image = await Image.findOne({
-            url: gallery.url,
-          });
+    for (let g of parentGallery.images) {
+      promises.push((async gallery => {
+        if (gallery.image) {
+          let thumbnail = await sharp(gallery.image.buffer)
+            .resize(180, 290)
+            .toBuffer();
 
-          if (image) {
-            let thumbnail = await sharp(image.image)
-              .resize(180, 290)
-              .toBuffer();
-
-            responseImages.push({
-              id: gallery.id,
-              imageId: image.id,
-              name: await u.GetFilename(gallery.url),
-              image: `data:image/png;base64, ${thumbnail.toString("base64")}`,
-            });
-          } else {
-            console.log(`Image not found: ${gallery.url}`);
-          }
+          return {
+            id: parentGallery.id,
+            imageId: gallery.id,
+            name: await u.GetFilename(parentGallery.url),
+            image: `data:image/png;base64, ${thumbnail.toString("base64")}`,
+          };
+        } else {
+          console.log(`Image not found: ${gallery.url}`);
         }
-      } else {
-        console.error(`Gallery not found ${subGallery.url}`);
-      }
-    } else {
-      console.error(`Subgallery not found ${request.params.id}`);
+      })(g));
     }
 
+    responseImages = await Promise.all(promises);
     response.send(responseImages.sort((a, b) => a.name - b.name));
   });
 
   app.get("/petite/subgalleries/:id", async (request, response) => {
-    let responseImages = [];
-    let mainGallery = await MainGallery.findOne({
-      id: request.params.id,
-    });
-    let subGalleries = await SubGallery.find({
-      mainGallery: mainGallery.url,
-    });
+    let query = [
+      {
+        $match: { id: request.params.id },
+      },
+      {
+        $lookup: {
+          from: "subgalleries",
+          localField: "url",
+          foreignField: "mainGallery",
+          as: "subgalleries",
+        },
+      },
+    ];
 
-    for (let subGallery of subGalleries) {
+    let responseImages = [];
+    let promises = [];
+    let subGalleries = await MainGallery.aggregate(query);
+
+    for (let subGallery of subGalleries[0].subgalleries) {
       let image = "";
 
-      if (subGallery.thumbnail) {
-        let imagedbModel = await Image.findOne({
-          id: subGallery.thumbnail,
-        });
+      promises.push(
+        (async gallery => {
+          if (gallery.thumbnail) {
+            let imagedbModel = await Image.findOne({
+              id: gallery.thumbnail,
+            });
 
-        if (imagedbModel) {
-          let thumbnail = await sharp(imagedbModel.image)
-            .resize(180, 290)
-            .toBuffer();
+            if (imagedbModel) {
+              let thumbnail = await sharp(imagedbModel.image)
+                .resize(180, 290)
+                .toBuffer();
 
-          image = `data:image/png;base64, ${thumbnail.toString("base64")}`;
-        }
-      }
+              image = `data:image/png;base64, ${thumbnail.toString("base64")}`;
+            }
+          }
 
-      responseImages.push({
-        id: subGallery.id,
-        url: subGallery.url,
-        name: subGallery.url
-          .split("/")[4]
-          .replace(/_/g, " ")
-          .replace(/\-/g, " "),
-        thumbnail: image,
-      });
+          return {
+            id: gallery.id,
+            url: gallery.url,
+            name: gallery.url
+              .split("/")[4]
+              .replace(/_/g, " ")
+              .replace(/\-/g, " "),
+            thumbnail: image,
+          };
+        })(subGallery)
+      );
     }
+
+    responseImages = await Promise.all(promises);
     response.send(responseImages);
   });
 
