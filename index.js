@@ -7,6 +7,7 @@ const Gallery = require("./models/gallery");
 const express = require("express");
 const config = require("./config");
 const ScrapperPetite = require("./functions/petite");
+const Log = require("./models/log")
 
 const app = express();
 
@@ -460,6 +461,15 @@ app.get("/scrapper/petite/images", async (request, response) => {
         }, {
           status: `ERROR[${result.status}]`,
         }));
+
+        let log = new Log({
+          id: u.guid(),
+          url: result.uri,          
+          fixed: false,
+          status: ''  
+        });
+
+        savePromises.push(log.save())
       }
     }
 

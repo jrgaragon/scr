@@ -21,9 +21,10 @@ module.exports = app => {
         $project: { id: 1, url: 1, image: { $arrayElemAt: ["$image", 0] } },
       },
     ];
-
+    console.time('maingalleryQuery');
     let galleries = await MainGallery.aggregate(filter);
-
+    console.timeEnd('maingalleryQuery');
+    console.time('maingallery');
     let promises = [];
 
     for (let gallery of galleries) {
@@ -61,6 +62,7 @@ module.exports = app => {
 
     try {
       galleriesResult = await Promise.all(promises);
+      console.timeEnd('maingallery');
       response.send(galleriesResult.filter(g => g.name));
     } catch (e) {
       console.log(e);

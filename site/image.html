@@ -1,22 +1,40 @@
 <html>
+<meta name="viewport" content="width=device-width, minimum-scale=0.1">
+<style>
+    .small {
+        max-width: 100%;
+        max-height: 100vh;
+        height: auto;
+        cursor: zoom-out;
+    }
 
-    <meta name="viewport" content="width=device-width, minimum-scale=0.1">
-    <style>@media print {#ghostery-purple-box {display:none !important}}</style>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <body style="margin: 0px; background: #0e0e0e;">
-        <div id="app-main-gallery">
-            <img style="-webkit-user-select: none;margin: auto;cursor: zoom-in;" :src="image"/>
-        </div>
-    </body>
+    .center {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;        
+    }
+    .zoomin {
+        cursor: zoom-in;
+    }
+</style>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+    integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+
+<body style="background: #0e0e0e;">
+    <div id="app-main-gallery" class="imgbox">
+        <img class="center" :class="{ small: smallSize,zoomin: smallSize }" :src="image" v-on:click="resize" />
+    </div>
+</body>
+
 </html>
 <script type="application/javascript">
-
     var app = new Vue({
         el: '#app-main-gallery',
         data: {
-            image: ''
+            image: '',
+            smallSize: true
         },
         mounted() {
             let uri = window.location.search.substring(1);
@@ -27,6 +45,11 @@
                 console.log(response)
                 this.image = response.data.image;
             }).catch(e => console.log(e));
+        },
+        methods: {
+            resize: function () {
+                this.smallSize = !this.smallSize;
+            }
         }
     })
 </script>

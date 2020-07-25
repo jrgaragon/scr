@@ -11,26 +11,52 @@ const Gallery = require("./models/gallery");
 
     let promises = [];
 
-    await openConnection();
+    await openConnection(); 
 
- //http://galleries8.petiteteenager.com/2/onlyopaques/pifbd11.JPG]
+    let results = await Gallery.find({$and: [{status: /ERROR\[[0-9]*\]/i}, {url: /.*carla.*/}]});
+    console.log(results.length);
+   
 
-let t = await Gallery.find({$and: [{url: /[a-zA-Z]+[0-9]*\.JPG$/}, {url: /.*only.*/}]});
-    console.log(t.length);
+    for (let item of results) {    
+        // let preNewUrl = item.url.replace(/([0-9]*\.JPG[0-9]*\.jpg)$/, '');
+        // let imageName = item.url.match (/([0-9]*\.jpg)$/)[0];
+        // let newUrl = `${preNewUrl}${imageName.toUpperCase()}`;
+        console.log(item);        
 
-    for (let url of t) {
-        // let fixed = url.replace(/\/[0-9]*\.JPG/, '/').replace(/jpg$/, 'JGP');
-        // promises.push(Gallery.findOneAndUpdate({ url: fixed }, { status: '' }));
-        //console.log(url)
-        //url.status = '';
-        console.log(url.url);
-        //promises.push(url.save());
+        promises.push(Gallery.findOneAndUpdate({id: item.id }, {status: ''}));
     }
 
     await Promise.all(promises);
-    console.log(t.length);
+    console.log(results.length);
     console.log('done');
 
 })();
+
+function groupBy(objectArray, property) {
+    return objectArray.reduce(function (acc, obj) {
+      var key = obj[property];
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(obj);
+      return acc;
+    }, {});
+  }
+
+//   function t1() {
+//         let results = await Gallery.find({$and: [{url: /\d*\.JPG\d*\.jpg/i}, {url: /.*carla.*/}]});
+//         console.log(results.length);
+//         let urls = [];
+
+//         for (let item of results) {    
+//             let preNewUrl = item.url.replace(/([0-9]*\.JPG[0-9]*\.jpg)$/, '');
+//             let imageName = item.url.match (/([0-9]*\.jpg)$/)[0];
+//             let newUrl = `${preNewUrl}${imageName.toUpperCase()}`;
+//             console.log(newUrl);        
+
+//             promises.push(Gallery.findOneAndUpdate({id: item.id }, {url: newUrl}));
+//         }
+//   }
+  
 
 

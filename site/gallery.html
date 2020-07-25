@@ -12,9 +12,9 @@
         <div class="card-group">
             <div class="columns medium-3" v-for="gallery in galleries">
                 <div class="card" style="width: 18rem;">
-                    <div class="card-body">
-                        <a :href="`image.html?id=${gallery.imageId}`"><img :src="gallery.image"></a>
-                    </div>
+
+                    <a :href="`image.html?id=${gallery.imageId}`"><img class="card-img-top" :src="gallery.image"  style="width:180px; height: 290px;"/></a>
+
                     <div class="card-body">
                         <div class="btn-group" role="group" aria-label="menu"></div>
                         <button type="button" class="btn btn-warning"
@@ -23,7 +23,8 @@
                             v-on:click="selectMainImageAsFavorite(gallery.imageId)">SM</button>
                         <button type="button" class="btn btn-success"
                             v-on:click="selectSubImageAsFavorite(gallery.imageId)">SS</button>
-                        <button type="button" class="btn btn-danger" v-on:click="deleteImage(gallery.imageId)">D</button>
+                        <button type="button" class="btn btn-danger"
+                            v-on:click="deleteImage(gallery.imageId)">D</button>
                     </div>
                 </div>
             </div>
@@ -32,4 +33,5 @@
 </body>
 <script src="components/alerts.js"></script>
 <script src="scripts/gallery.js"></script>
+
 </html>
