@@ -12,6 +12,10 @@ const subGallerySchema = mongoose.Schema({
   status: String,
   mainGallery: String,
   thumbnail: String,
+  favorite: {
+    type: Boolean,
+    default: false
+  }
 });
 
 const SubGallery = mongoose.model("subGallery", subGallerySchema);

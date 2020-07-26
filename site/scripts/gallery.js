@@ -50,16 +50,21 @@ var app = new Vue({
     markAsFavorite: function (imageId) {},
     deleteImage: function (imageId) {
       let vm = this;
-      if (confirm('Delete?')) {
-      axios
-        .delete(`http://localhost:3000/petite/admin/delete/${imageId}`)
-        .then(response => vm.processResponseMesage(response))
-        .catch(e => vm.processResponseMesage({}, e));
+      if (confirm('Delete?')) {      
+        axios
+          .delete(`http://localhost:3000/petite/admin/delete/${imageId}`)
+          .then(response => {
+            let index = vm.galleries.findIndex(i => i.imageId === imageId); 
+            vm.$delete(vm.galleries, index);
+            vm.processResponseMesage(response);
+          })
+          .catch(e => vm.processResponseMesage({}, e));
       }
     },
     processResponseMesage: function (response, e) {
       let vm = this;
-      if (response.data.status === "done") {
+      console.log(response)
+      if (response.data && response.data.status === "done") {
         console.log(response);
         vm.alerts.success.show = true;
         vm.alerts.success.message = `${response.data.message}`;

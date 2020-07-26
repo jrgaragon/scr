@@ -8,8 +8,7 @@ const u = utility.getInstance();
 
 module.exports = app => {
   app.get("/petite/galleries", async (request, response) => {
-    let filter = [
-      {
+    let filter = [{
         $lookup: {
           from: "images",
           localField: "thumbnail",
@@ -18,7 +17,13 @@ module.exports = app => {
         },
       },
       {
-        $project: { id: 1, url: 1, image: { $arrayElemAt: ["$image", 0] } },
+        $project: {
+          id: 1,
+          url: 1,
+          image: {
+            $arrayElemAt: ["$image", 0]
+          }
+        },
       },
     ];
     console.time('maingalleryQuery');
@@ -68,15 +73,20 @@ module.exports = app => {
       console.log(e);
       response
         .status(500)
-        .send({ status: "error", message: e.message, stack: e.stack });
+        .send({
+          status: "error",
+          message: e.message,
+          stack: e.stack
+        });
     }
   });
 
   app.get("/petite/galleries/:id", async (request, response) => {
     let responseImages = [];
-    let query = [
-      {
-        $match: { id: request.params.id },
+    let query = [{
+        $match: {
+          id: request.params.id
+        },
       },
       {
         $lookup: {
@@ -86,7 +96,12 @@ module.exports = app => {
           as: "galleries",
         },
       },
-      { $unwind: { path: "$galleries", preserveNullAndEmptyArrays: true } },
+      {
+        $unwind: {
+          path: "$galleries",
+          preserveNullAndEmptyArrays: true
+        }
+      },
       {
         $lookup: {
           from: "images",
@@ -149,9 +164,10 @@ module.exports = app => {
   });
 
   app.get("/petite/subgalleries/:id", async (request, response) => {
-    let query = [
-      {
-        $match: { id: request.params.id },
+    let query = [{
+        $match: {
+          id: request.params.id
+        },
       },
       {
         $lookup: {
@@ -172,6 +188,7 @@ module.exports = app => {
 
       promises.push(
         (async gallery => {
+        
           if (gallery.thumbnail) {
             let imagedbModel = await Image.findOne({
               id: gallery.thumbnail,
@@ -194,20 +211,25 @@ module.exports = app => {
               .replace(/_/g, " ")
               .replace(/\-/g, " "),
             thumbnail: image,
+            favorite: gallery.favorite
           };
         })(subGallery)
       );
     }
 
     responseImages = await Promise.all(promises);
-    response.send(responseImages);
+
+    response.send(responseImages.sort((a, b) => {
+      if (typeof a.favorite === 'undefined') a.favorite = false;
+      if (typeof b.favorite === 'undefined') b.favorite = false;
+      return b.favorite - a.favorite;
+    }));
   });
 
   app.get("/petite/image/:id", (request, response) => {
     console.log(request.params.id);
 
-    Image.findOne(
-      {
+    Image.findOne({
         id: request.params.id,
       },
       (err, img) => {
@@ -218,5 +240,25 @@ module.exports = app => {
         });
       }
     );
+  });
+
+  app.post("/petite/gallery/favorite/:id", async (request, response) => {
+    console.log(request.params.id);
+
+    let gallery = await SubGallery.findOne({
+      id: request.params.id
+    });
+
+    if (typeof gallery.favorite === 'undefined') {
+      gallery.favorite = false;
+    }
+    gallery.favorite = !gallery.favorite;
+    await gallery.save();
+
+    response.send({
+      status: 'done',
+      message: `Set as favorite ${gallery.id}`
+    });
+
   });
 };

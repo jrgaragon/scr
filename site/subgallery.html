@@ -22,7 +22,7 @@
                     </div>
                     <div class="card-body">
                         <a :href="`gallery.html?id=${gallery.id}`" class="btn btn-primary">Link</a>
-                        <button type="button" class="btn btn-warning">F</button>
+                        <button type="button" class="btn btn-warning" v-on:click="setFavorite(gallery.id)">F</button>
                         <button type="button" class="btn btn-info">Fix</button>
                         <button type="button" class="btn btn-danger" v-on:click="deleteGallery(gallery.id)">D</button>
                     </div>

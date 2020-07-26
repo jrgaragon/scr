@@ -4,6 +4,12 @@ const Image = require("./models/image");
 const MainGallery = require("./models/maingallery");
 const SubGallery = require("./models/subgallery");
 const Gallery = require("./models/gallery");
+const sharp = require("sharp");
+const {
+  request
+} = require("express");
+const u = utility.getInstance();
+const fs = require('fs');
 
 
 const commit = false;
@@ -12,12 +18,50 @@ const commit = false;
 
   await openConnection();
 
-  await t1(/.*melanie.*/, commit);
-  await t2(/.*melanie.*/, commit);
+  // await t1(/.*melanie.*/, commit);
+  // await t2(/.*melanie.*/, commit);
+  await t3('c7f36661-873f-41ef-afa7-734b569c7879');
 
   console.log('---DONE---');
 
 })();
+
+const t3 = async (imageId) => {
+
+  let image = await Image.findOne({
+    id: imageId
+  });
+
+  let q = 90;
+  let sharpImage = sharp(image.image);
+  let imageBuffer;
+  let metadata = await sharpImage.metadata();
+
+  console.log(`${image.url}  -  [${metadata.width}x${metadata.height}]`);
+
+  if (metadata.height > 1000) {
+    imageBuffer = await sharpImage.resize({
+      fit: sharp.fit.contain,
+      height: 1000
+    }).webp({
+      quality: q
+    }).toBuffer();
+  } else {
+    imageBuffer = await sharpImage.webp({
+      quality: q
+    }).toBuffer();
+  }
+
+  if(imageBuffer.length < image.size) {
+    image.size = imageBuffer.length;
+    image.image = imageBuffer;
+
+    image.save();
+  }else {
+    console.log('Not worth it');
+  }
+
+}
 
 const t2 = async (filter, commit) => {
   let results = await Gallery.find({
@@ -47,7 +91,7 @@ const t2 = async (filter, commit) => {
   }
 
   console.log(results.length);
-  return Promise.all(promises);  
+  return Promise.all(promises);
 }
 
 const t1 = async (filter, commit) => {
