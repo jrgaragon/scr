@@ -1,10 +1,5 @@
 const scrapper = require("./scrapper");
-const axios = require("axios");
-const xpath = require("xpath-html");
-const fs = require("fs");
-const {
-  RSA_NO_PADDING
-} = require("constants");
+const ImageUtility = require("../functions/imageUtility");
 const utility = require("../utility/utility");
 const {
   Console
@@ -218,13 +213,16 @@ class petite extends scrapper {
   }
 
   async scrapImage(config) {
+    const imageUtility = new ImageUtility();
     try {
-      let image = await super.getImage(config.uri);
+      let imageRaw = await super.getImage(config.uri);
+      let image = await imageUtility.resize(imageRaw.data);
+
       return {
-        image: image.data,
+        image: image,
         id: config.id,
         gallery: config.gallery,
-        status: image.status,
+        status: imageRaw.status,
         uri: config.uri
       }
     } catch (e) {
@@ -236,7 +234,7 @@ class petite extends scrapper {
         uri: config.uri
       }
     }
-  }
+  } 
 }
 
 module.exports = petite;

@@ -3,7 +3,7 @@ Vue.component('notification', {
     template: 
     `
     <div>
-        <div class="alert alert-success" role="alert" v-show="alerts.success.show">
+        <div class="alert alert-success fixed-top" role="alert" v-show="alerts.success.show">
             {{alerts.success.message}}
         </div>
         <div class="alert alert-danger" role="alert" v-show="alerts.error.show">

@@ -135,7 +135,7 @@ module.exports = app => {
       }));
       promises.push(Image.deleteMany({
         url: gallery.url
-      }));     
+      }));
     }
 
     await Promise.all(promises);
@@ -144,6 +144,45 @@ module.exports = app => {
       status: "done",
       message: `Gallery deleted: ${request.params.galleryId}`,
     });
-  }
-  );
+  });
+
+  app.delete("/petite/admin/deleteMainGallery/:galleryId", async (request, response) => {
+    let promises = [];
+
+    let mainGallery = await MainGallery.findOne({
+      id: request.params.galleryId
+    });
+
+    let subGalleries = await SubGallery.find({
+      mainGallery: mainGallery.url,
+    });
+
+    for (let subGallery of subGalleries) {
+
+      promises.push(SubGallery.deleteOne({
+        id: subGallery.id
+      }));
+
+      promises.push(Gallery.deleteMany({
+        gallery: subGallery.url
+      }));
+
+      promises.push(Image.deleteMany({
+        gallery: subGallery.url
+      }));
+
+    }
+
+    await Promise.all(promises);
+
+    await MainGallery.deleteOne({
+      id: request.params.galleryId
+    });
+
+    response.send({
+      status: "done",
+      message: `Gallery deleted: ${request.params.galleryId}`,
+    });
+  });
+
 };

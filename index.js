@@ -8,6 +8,7 @@ const express = require("express");
 const config = require("./config");
 const ScrapperPetite = require("./functions/petite");
 const Log = require("./models/log")
+const iu = require("./functions/imageUtility");
 
 const app = express();
 
@@ -412,7 +413,7 @@ app.get("/scrapper/petite/images", async (request, response) => {
           id: img.id,
           gallery: img.gallery,
         });
-      });
+      }); 
 
     let imagesResult = await Promise.all(promises);
     let savePromises = [];
