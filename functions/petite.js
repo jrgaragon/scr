@@ -202,7 +202,7 @@ class petite extends scrapper {
   }
 
   isValidDomain(url) {
-    const domains = ["ptclassic", "petiteteenager", "petiteteenagerr"];
+    const domains = [];
 
     for (let d of domains) {
       if (url.indexOf(d) > -1 && url.indexOf("movie") === -1) {
